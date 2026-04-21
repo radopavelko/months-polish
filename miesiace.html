@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Miesiące po polsku - Gra dla Dzieci</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    background: linear-gradient(135deg, #74b9ff, #a29bfe, #fd79a8);
+    min-height: 100vh;
+    padding: 20px;
+    color: #2d3436;
+  }
+  h1 {
+    text-align: center;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    font-size: 2.2em;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+  }
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    background: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    font-family: inherit;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+  }
+  .tab:hover { transform: translateY(-2px); }
+  .tab.active { background: #ffeaa7; color: #d63031; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.3s;
+    min-height: 220px;
+    perspective: 1000px;
+  }
+  .card:hover { transform: scale(1.05); }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 10px;
+  }
+  .card-back { transform: rotateY(180deg); background: #ffeaa7; }
+  .emoji { font-size: 3.5em; margin-bottom: 8px; }
+  .month-name { font-size: 1.4em; font-weight: bold; color: #d63031; margin-bottom: 5px; }
+  .month-num { color: #636e72; font-size: 0.9em; }
+  .analogy { font-size: 0.95em; color: #2d3436; line-height: 1.4; }
+  .analogy strong { color: #d63031; }
+
+  /* Quiz */
+  .quiz-box {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  .quiz-emoji { font-size: 5em; margin-bottom: 10px; }
+  .quiz-hint { font-size: 1.2em; color: #636e72; margin-bottom: 20px; font-style: italic; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .quiz-btn {
+    background: #74b9ff;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.2s;
+  }
+  .quiz-btn:hover { transform: scale(1.05); background: #0984e3; }
+  .quiz-btn.correct { background: #00b894 !important; }
+  .quiz-btn.wrong { background: #d63031 !important; }
+  .score {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #d63031;
+    margin: 15px 0;
+  }
+  .feedback {
+    font-size: 1.3em;
+    font-weight: bold;
+    min-height: 40px;
+    margin: 10px 0;
+  }
+  .next-btn {
+    background: #fdcb6e;
+    color: #2d3436;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 10px;
+  }
+
+  /* Order game */
+  .order-box {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  }
+  .slots, .pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 15px 0;
+    min-height: 60px;
+  }
+  .slot {
+    width: 110px;
+    height: 55px;
+    border: 2px dashed #b2bec3;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    color: #b2bec3;
+    background: #f1f2f6;
+  }
+  .slot.filled { border-style: solid; background: #ffeaa7; color: #2d3436; font-weight: bold; }
+  .chip {
+    padding: 10px 15px;
+    background: #a29bfe;
+    color: white;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    font-size: 0.95em;
+  }
+  .chip:hover { background: #6c5ce7; }
+  .order-num { font-size: 0.75em; color: #d63031; display: block; }
+
+  /* Seasons wheel */
+  .wheel-box { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+  .seasons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+  .season { border-radius: 15px; padding: 15px; min-height: 140px; border: 3px dashed transparent; transition: all 0.2s; }
+  .season.drag-over { border-color: #2d3436; transform: scale(1.02); }
+  .season h3 { margin-bottom: 10px; font-size: 1.2em; text-align: center; }
+  .season-zima { background: linear-gradient(135deg, #dfe6e9, #b2bec3); }
+  .season-wiosna { background: linear-gradient(135deg, #55efc4, #81ecec); }
+  .season-lato { background: linear-gradient(135deg, #ffeaa7, #fab1a0); }
+  .season-jesien { background: linear-gradient(135deg, #fdcb6e, #e17055); }
+  .season-drop { min-height: 70px; display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; background: rgba(255,255,255,0.4); border-radius: 10px; }
+  .month-pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; background: #f1f2f6; border-radius: 10px; min-height: 80px; }
+  .mchip { padding: 10px 16px; background: #6c5ce7; color: white; border-radius: 10px; font-weight: bold; cursor: pointer; user-select: none; font-size: 0.95em; border: 3px solid transparent; transition: transform 0.15s; }
+  .mchip:hover { transform: scale(1.08); }
+  .mchip.selected { background: #fd79a8; border-color: #2d3436; transform: scale(1.1); box-shadow: 0 0 15px rgba(253,121,168,0.8); }
+  .mchip.placed { background: #00b894; cursor: default; }
+  .mchip.placed:hover { transform: none; }
+  .mchip.wrong-shake { animation: shake 0.4s; background: #d63031; }
+  .season { cursor: pointer; }
+  .season.pulse { animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow: 0 0 0 0 rgba(45,52,54,0.4);} 50%{box-shadow: 0 0 0 10px rgba(45,52,54,0);} }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+
+  /* Timeline */
+  .timeline-wrap { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+  .timeline { display: flex; overflow-x: auto; gap: 10px; padding: 15px 5px; scroll-snap-type: x mandatory; }
+  .tl-month { flex: 0 0 220px; scroll-snap-align: center; border-radius: 15px; padding: 15px; text-align: center; color: white; transition: transform 0.2s; cursor: pointer; }
+  .tl-month:hover { transform: translateY(-5px) scale(1.03); }
+  .tl-month .big-emoji { font-size: 4.5em; line-height: 1; margin: 5px 0; }
+  .tl-month h3 { font-size: 1.5em; margin: 5px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+  .tl-month .tl-num { background: rgba(255,255,255,0.3); display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.85em; margin-bottom: 5px; }
+  .tl-month .tl-scene { font-size: 0.9em; background: rgba(255,255,255,0.25); padding: 8px; border-radius: 8px; margin-top: 8px; }
+  .tl-controls { text-align: center; margin-top: 10px; }
+  .tl-arrow { background: #6c5ce7; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 1.5em; cursor: pointer; margin: 0 5px; }
+
+  /* Race */
+  .race-box { max-width: 700px; margin: 0 auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: center; }
+  .race-stats { display: flex; justify-content: space-around; margin: 15px 0; font-size: 1.1em; font-weight: bold; }
+  .race-stats .stat { background: #ffeaa7; padding: 10px 20px; border-radius: 15px; }
+  .race-target { font-size: 1.3em; color: #636e72; margin: 10px 0; }
+  .race-target strong { color: #d63031; font-size: 1.4em; }
+  .race-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
+  .race-btn { padding: 18px 5px; background: #74b9ff; color: white; border: none; border-radius: 10px; font-size: 1em; font-weight: bold; cursor: pointer; font-family: inherit; transition: transform 0.1s; }
+  .race-btn:hover:not(:disabled) { transform: scale(1.05); background: #0984e3; }
+  .race-btn.done { background: #00b894; }
+  .race-btn.flash-wrong { background: #d63031; }
+  .race-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .start-btn { background: #00b894; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.3em; font-weight: bold; cursor: pointer; font-family: inherit; }
+  .best-time { color: #d63031; font-size: 1.1em; margin-top: 10px; }
+</style>
+</head>
+<body>
+  <h1>🌟 Miesiące po Polsku 🌟</h1>
+  <p class="subtitle">Gra dla mądrych dzieci!</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showScreen('learn', this)">📚 Ucz się</button>
+    <button class="tab" onclick="showScreen('quiz', this)">❓ Quiz</button>
+    <button class="tab" onclick="showScreen('order', this)">🔢 Ułóż po kolei</button>
+    <button class="tab" onclick="showScreen('wheel', this)">🎡 Pory roku</button>
+    <button class="tab" onclick="showScreen('timeline', this)">🎨 Oś czasu</button>
+    <button class="tab" onclick="showScreen('race', this)">🏃 Wyścig</button>
+  </div>
+
+  <div id="learn" class="screen active">
+    <div class="cards" id="cardsContainer"></div>
+  </div>
+
+  <div id="quiz" class="screen">
+    <div class="quiz-box">
+      <div class="score" id="score">Punkty: 0</div>
+      <div class="quiz-emoji" id="quizEmoji"></div>
+      <div class="quiz-hint" id="quizHint"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" onclick="nextQuiz()">Następne ➡️</button>
+    </div>
+  </div>
+
+  <div id="wheel" class="screen">
+    <div class="wheel-box">
+      <h2 style="text-align:center; color:#d63031;">Przeciągnij miesiące do właściwej pory roku!</h2>
+      <p style="text-align:center; margin:10px 0; color:#636e72;">Chwyć miesiąc i upuść go na odpowiednie pole (zima ❄️, wiosna 🌷, lato ☀️, jesień 🍂).</p>
+      <div class="seasons">
+        <div class="season season-zima" data-season="zima"><h3>❄️ ZIMA</h3><div class="season-drop" data-season="zima"></div></div>
+        <div class="season season-wiosna" data-season="wiosna"><h3>🌷 WIOSNA</h3><div class="season-drop" data-season="wiosna"></div></div>
+        <div class="season season-lato" data-season="lato"><h3>☀️ LATO</h3><div class="season-drop" data-season="lato"></div></div>
+        <div class="season season-jesien" data-season="jesien"><h3>🍂 JESIEŃ</h3><div class="season-drop" data-season="jesien"></div></div>
+      </div>
+      <div class="month-pool" id="monthPool"></div>
+      <div style="text-align:center;">
+        <button class="next-btn" onclick="resetWheel()">🔄 Zacznij od nowa</button>
+        <div class="feedback" id="wheelFeedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="timeline" class="screen">
+    <div class="timeline-wrap">
+      <h2 style="text-align:center; color:#d63031;">Podróż przez rok 🌍</h2>
+      <p style="text-align:center; margin:10px 0; color:#636e72;">Przewijaj na boki i zobacz, co dzieje się w każdym miesiącu!</p>
+      <div class="timeline" id="timelineScroll"></div>
+      <div class="tl-controls">
+        <button class="tl-arrow" onclick="scrollTL(-250)">◀</button>
+        <button class="tl-arrow" onclick="scrollTL(250)">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="race" class="screen">
+    <div class="race-box">
+      <h2 style="color:#d63031;">🏃 Wyścig miesięcy!</h2>
+      <p style="color:#636e72; margin:10px 0;">Klikaj miesiące po kolei od <strong>stycznia</strong> do <strong>grudnia</strong> jak najszybciej!</p>
+      <div class="race-stats">
+        <div class="stat">⏱️ <span id="raceTime">0.0</span>s</div>
+        <div class="stat">✅ <span id="raceProgress">0</span>/12</div>
+      </div>
+      <div class="race-target">Szukaj: <strong id="raceTarget">Kliknij START</strong></div>
+      <div class="race-grid" id="raceGrid"></div>
+      <button class="start-btn" id="raceStartBtn" onclick="startRace()">▶ START</button>
+      <div class="best-time" id="raceBest"></div>
+      <div class="feedback" id="raceFeedback"></div>
+    </div>
+  </div>
+
+  <div id="order" class="screen">
+    <div class="order-box">
+      <h2 style="text-align:center; color:#d63031;">Ułóż miesiące po kolei!</h2>
+      <p style="text-align:center; margin:10px 0;">Kliknij miesiące w dobrej kolejności od stycznia do grudnia.</p>
+      <div class="slots" id="slots"></div>
+      <div class="pool" id="pool"></div>
+      <div style="text-align:center;">
+        <button class="next-btn" onclick="resetOrder()">🔄 Zacznij od nowa</button>
+        <div class="feedback" id="orderFeedback"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const months = [
+  { num: 1, name: "Styczeń", emoji: "❄️☃️", analogy: "<strong>Styka się</strong> stary rok z nowym! Styczeń – spotkanie dwóch lat. Zima w pełni, jest śnieg i mróz." },
+  { num: 2, name: "Luty", emoji: "🥶🌬️", analogy: "<strong>Luty = lutowy</strong>, czyli srogi, ostry mróz! Najzimniejszy miesiąc, a wiatr szczypie w policzki." },
+  { num: 3, name: "Marzec", emoji: "🌱🐰", analogy: "Marzec jak w przysłowiu: <strong>„w marcu jak w garncu”</strong> – raz słońce, raz śnieg. Budzi się wiosna!" },
+  { num: 4, name: "Kwiecień", emoji: "🌷🌼", analogy: "<strong>Kwiecień od „kwiatów”</strong>! Rozkwitają tulipany, żonkile i stokrotki. Wszystko kwitnie!" },
+  { num: 5, name: "Maj", emoji: "🌳🐝", analogy: "Maj – najpiękniejszy miesiąc! <strong>„Majówka”</strong> – wolne dni, pikniki, zieleń wszędzie." },
+  { num: 6, name: "Czerwiec", emoji: "🍓☀️", analogy: "<strong>Czerwiec od „czerwonych”</strong> owoców – truskawki i czereśnie już są czerwone i słodkie!" },
+  { num: 7, name: "Lipiec", emoji: "🌳🍯", analogy: "<strong>Lipiec od „lipy”</strong> – to drzewo, które właśnie teraz pachnie i kwitnie. Pszczoły robią miód z lipy!" },
+  { num: 8, name: "Sierpień", emoji: "🌾🚜", analogy: "<strong>Sierpień od „sierpa”</strong> – narzędzia do koszenia zboża. Czas żniw i wakacji!" },
+  { num: 9, name: "Wrzesień", emoji: "🎒📚✏️", analogy: "<strong>Wrzesień</strong> – <strong>„Wreszcie</strong> szkoła!” 🏫 To miesiąc, w którym dzieci wracają do szkoły po wakacjach. Zapamiętaj: <strong>Wrzesień = Wreszcie do szkoły!</strong>" },
+  { num: 10, name: "Październik", emoji: "🍁🎃", analogy: "<strong>Październik od „paździerzy”</strong> – kawałków lnu. Liście robią się żółte, czerwone i pomarańczowe!" },
+  { num: 11, name: "Listopad", emoji: "🍂🌧️", analogy: "<strong>Listopad</strong> – bo <strong>„liście padają”</strong> z drzew! Łatwo zapamiętać: liście + padać." },
+  { num: 12, name: "Grudzień", emoji: "🎄🎅", analogy: "<strong>Grudzień od „grudy”</strong> – zmarzniętej ziemi! Jest zimno, pada śnieg i są Święta Bożego Narodzenia!" }
+];
+
+// LEARN
+const container = document.getElementById('cardsContainer');
+months.forEach(m => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="card-inner">
+      <div class="card-front">
+        <div class="emoji">${m.emoji}</div>
+        <div class="month-name">${m.name}</div>
+        <div class="month-num">miesiąc nr ${m.num}</div>
+        <div style="margin-top:10px; font-size:0.8em; color:#636e72;">👆 Kliknij!</div>
+      </div>
+      <div class="card-back">
+        <div class="month-name">${m.name}</div>
+        <div class="analogy">${m.analogy}</div>
+      </div>
+    </div>`;
+  card.onclick = () => card.classList.toggle('flipped');
+  container.appendChild(card);
+});
+
+// SCREENS
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'quiz') nextQuiz();
+  if (id === 'order') resetOrder();
+  if (id === 'wheel') resetWheel();
+  if (id === 'timeline') buildTimeline();
+  if (id === 'race') resetRace();
+}
+
+// QUIZ
+let score = 0;
+let currentMonth = null;
+function shuffle(a) { return a.slice().sort(() => Math.random() - 0.5); }
+function nextQuiz() {
+  document.getElementById('feedback').textContent = '';
+  currentMonth = months[Math.floor(Math.random() * months.length)];
+  document.getElementById('quizEmoji').textContent = currentMonth.emoji;
+  document.getElementById('quizHint').innerHTML = currentMonth.analogy;
+  const wrongs = shuffle(months.filter(m => m.num !== currentMonth.num)).slice(0, 3);
+  const options = shuffle([currentMonth, ...wrongs]);
+  const box = document.getElementById('quizOptions');
+  box.innerHTML = '';
+  options.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'quiz-btn';
+    b.textContent = o.name;
+    b.onclick = () => checkAnswer(b, o);
+    box.appendChild(b);
+  });
+}
+function checkAnswer(btn, picked) {
+  const fb = document.getElementById('feedback');
+  if (picked.num === currentMonth.num) {
+    btn.classList.add('correct');
+    score++;
+    fb.textContent = '🎉 Brawo! Dobrze!';
+    fb.style.color = '#00b894';
+  } else {
+    btn.classList.add('wrong');
+    fb.textContent = `❌ Prawidłowa odpowiedź: ${currentMonth.name}`;
+    fb.style.color = '#d63031';
+    document.querySelectorAll('#quizOptions .quiz-btn').forEach(b => {
+      if (b.textContent === currentMonth.name) b.classList.add('correct');
+    });
+  }
+  document.getElementById('score').textContent = 'Punkty: ' + score;
+  document.querySelectorAll('#quizOptions .quiz-btn').forEach(b => b.disabled = true);
+}
+
+// ORDER
+let placed = [];
+function resetOrder() {
+  placed = [];
+  const slots = document.getElementById('slots');
+  const pool = document.getElementById('pool');
+  document.getElementById('orderFeedback').textContent = '';
+  slots.innerHTML = '';
+  for (let i = 1; i <= 12; i++) {
+    const s = document.createElement('div');
+    s.className = 'slot';
+    s.textContent = i;
+    s.id = 'slot-' + i;
+    slots.appendChild(s);
+  }
+  pool.innerHTML = '';
+  shuffle(months).forEach(m => {
+    const c = document.createElement('button');
+    c.className = 'chip';
+    c.textContent = m.name;
+    c.onclick = () => placeChip(c, m);
+    pool.appendChild(c);
+  });
+}
+function placeChip(chip, m) {
+  const next = placed.length + 1;
+  const slot = document.getElementById('slot-' + next);
+  if (m.num === next) {
+    slot.textContent = m.name;
+    slot.classList.add('filled');
+    chip.remove();
+    placed.push(m);
+    if (placed.length === 12) {
+      document.getElementById('orderFeedback').textContent = '🏆 WSPANIALE! Znasz wszystkie miesiące!';
+      document.getElementById('orderFeedback').style.color = '#00b894';
+    }
+  } else {
+    chip.style.background = '#d63031';
+    setTimeout(() => chip.style.background = '', 500);
+    document.getElementById('orderFeedback').textContent = `❌ Szukamy miesiąca nr ${next}. Spróbuj jeszcze raz!`;
+    document.getElementById('orderFeedback').style.color = '#d63031';
+  }
+}
+
+// ===== WHEEL (seasons) - click to select, click to place =====
+const seasonOf = { 12:'zima', 1:'zima', 2:'zima', 3:'wiosna', 4:'wiosna', 5:'wiosna', 6:'lato', 7:'lato', 8:'lato', 9:'jesien', 10:'jesien', 11:'jesien' };
+let wheelPlaced = 0;
+let selectedChip = null;
+function resetWheel() {
+  wheelPlaced = 0;
+  selectedChip = null;
+  document.getElementById('wheelFeedback').textContent = 'Krok 1: kliknij miesiąc. Krok 2: kliknij porę roku.';
+  document.getElementById('wheelFeedback').style.color = '#636e72';
+  document.querySelectorAll('.season-drop').forEach(d => d.innerHTML = '');
+  document.querySelectorAll('.season').forEach(s => s.classList.remove('pulse'));
+  const pool = document.getElementById('monthPool');
+  pool.innerHTML = '';
+  shuffle(months).forEach(m => {
+    const chip = document.createElement('div');
+    chip.className = 'mchip';
+    chip.textContent = m.name;
+    chip.dataset.num = m.num;
+    chip.onclick = () => selectChip(chip, m);
+    pool.appendChild(chip);
+  });
+}
+function selectChip(chip, m) {
+  if (chip.classList.contains('placed')) return;
+  document.querySelectorAll('.mchip.selected').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.season').forEach(s => s.classList.remove('pulse'));
+  if (selectedChip === chip) { selectedChip = null; return; }
+  chip.classList.add('selected');
+  selectedChip = chip;
+  document.querySelectorAll('.season').forEach(s => s.classList.add('pulse'));
+  const fb = document.getElementById('wheelFeedback');
+  fb.textContent = `Wybrałeś: ${m.name}. Teraz kliknij porę roku!`;
+  fb.style.color = '#6c5ce7';
+}
+document.querySelectorAll('.season').forEach(zone => {
+  zone.onclick = () => {
+    if (!selectedChip) {
+      const fb = document.getElementById('wheelFeedback');
+      fb.textContent = '👆 Najpierw kliknij miesiąc!';
+      fb.style.color = '#d63031';
+      return;
+    }
+    const num = parseInt(selectedChip.dataset.num);
+    const targetSeason = zone.dataset.season;
+    const fb = document.getElementById('wheelFeedback');
+    if (seasonOf[num] === targetSeason) {
+      selectedChip.classList.remove('selected');
+      selectedChip.classList.add('placed');
+      zone.querySelector('.season-drop').appendChild(selectedChip);
+      selectedChip = null;
+      document.querySelectorAll('.season').forEach(s => s.classList.remove('pulse'));
+      wheelPlaced++;
+      if (wheelPlaced === 12) {
+        fb.textContent = '🏆 Super! Znasz wszystkie pory roku!';
+        fb.style.color = '#00b894';
+      } else {
+        fb.textContent = '✅ Dobrze! Wybierz kolejny miesiąc.';
+        fb.style.color = '#00b894';
+      }
+    } else {
+      selectedChip.classList.add('wrong-shake');
+      setTimeout(() => { if (selectedChip) selectedChip.classList.remove('wrong-shake'); }, 500);
+      fb.textContent = '❌ Zła pora roku! Spróbuj innej.';
+      fb.style.color = '#d63031';
+    }
+  };
+});
+
+// ===== TIMELINE =====
+const sceneMap = {
+  1: { color:'#74b9ff', emoji:'⛄❄️🛷', scene:'Śnieg, sanki, bałwan. Noworoczne fajerwerki! 🎆' },
+  2: { color:'#0984e3', emoji:'🥶🌨️🧣', scene:'Mróz szczypie w nos. Zakładamy czapkę i szalik.' },
+  3: { color:'#55efc4', emoji:'🌱🐑🌦️', scene:'Śnieg topnieje, wyłaziją pierwsze listki. „W marcu jak w garncu!"' },
+  4: { color:'#00b894', emoji:'🌷🐰🥚', scene:'Wielkanoc! Kwitną tulipany i żonkile.' },
+  5: { color:'#a29bfe', emoji:'🌳🌸🐝', scene:'Zielono wszędzie! Majówka i pikniki w parku.' },
+  6: { color:'#ff7675', emoji:'🍓☀️🏊', scene:'Truskawki, koniec szkoły, zaczynają się wakacje!' },
+  7: { color:'#fdcb6e', emoji:'🏖️🍦🌻', scene:'Wakacje pełną parą! Plaża, lody, słońce.' },
+  8: { color:'#e17055', emoji:'🌾🍉🚜', scene:'Żniwa na polach, arbuzy i ostatnie dni wakacji.' },
+  9: { color:'#fab1a0', emoji:'🎒📚✏️', scene:'Wreszcie szkoła! Plecak na plecy i do klasy.' },
+  10: { color:'#d63031', emoji:'🍁🎃🌰', scene:'Kolorowe liście, kasztany, dynie.' },
+  11: { color:'#636e72', emoji:'🍂🌧️☂️', scene:'Deszcz, liście padają, ciemno szybko.' },
+  12: { color:'#2d3436', emoji:'🎄🎅🎁', scene:'Święta Bożego Narodzenia! Choinka, prezenty, śnieg.' }
+};
+function buildTimeline() {
+  const tl = document.getElementById('timelineScroll');
+  if (tl.children.length) return;
+  months.forEach(m => {
+    const s = sceneMap[m.num];
+    const card = document.createElement('div');
+    card.className = 'tl-month';
+    card.style.background = `linear-gradient(160deg, ${s.color}, ${s.color}cc)`;
+    card.innerHTML = `
+      <div class="tl-num">miesiąc ${m.num}</div>
+      <h3>${m.name}</h3>
+      <div class="big-emoji">${s.emoji}</div>
+      <div class="tl-scene">${s.scene}</div>`;
+    tl.appendChild(card);
+  });
+}
+function scrollTL(px) { document.getElementById('timelineScroll').scrollBy({ left: px, behavior: 'smooth' }); }
+
+// ===== RACE =====
+let raceTimer = null, raceStart = 0, raceCurrent = 0, raceActive = false;
+function resetRace() {
+  raceActive = false;
+  clearInterval(raceTimer);
+  raceCurrent = 0;
+  document.getElementById('raceTime').textContent = '0.0';
+  document.getElementById('raceProgress').textContent = '0';
+  document.getElementById('raceTarget').textContent = 'Kliknij START';
+  document.getElementById('raceFeedback').textContent = '';
+  document.getElementById('raceStartBtn').style.display = 'inline-block';
+  const grid = document.getElementById('raceGrid');
+  grid.innerHTML = '';
+  shuffle(months).forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'race-btn';
+    b.textContent = m.name;
+    b.dataset.num = m.num;
+    b.disabled = true;
+    b.onclick = () => raceClick(b, m);
+    grid.appendChild(b);
+  });
+  const best = localStorage.getItem('raceBest');
+  document.getElementById('raceBest').textContent = best ? `🏆 Najlepszy czas: ${best}s` : '';
+}
+function startRace() {
+  raceActive = true;
+  raceCurrent = 1;
+  raceStart = Date.now();
+  document.getElementById('raceStartBtn').style.display = 'none';
+  document.getElementById('raceTarget').innerHTML = 'Znajdź: <strong>Styczeń</strong>';
+  document.querySelectorAll('.race-btn').forEach(b => b.disabled = false);
+  raceTimer = setInterval(() => {
+    const t = ((Date.now() - raceStart) / 1000).toFixed(1);
+    document.getElementById('raceTime').textContent = t;
+  }, 100);
+}
+function raceClick(btn, m) {
+  if (!raceActive) return;
+  if (m.num === raceCurrent) {
+    btn.classList.add('done');
+    btn.disabled = true;
+    raceCurrent++;
+    document.getElementById('raceProgress').textContent = (raceCurrent - 1);
+    if (raceCurrent > 12) {
+      clearInterval(raceTimer);
+      raceActive = false;
+      const t = ((Date.now() - raceStart) / 1000).toFixed(1);
+      document.getElementById('raceTime').textContent = t;
+      const prev = localStorage.getItem('raceBest');
+      let msg = `🏆 Skończyłeś w ${t}s!`;
+      if (!prev || parseFloat(t) < parseFloat(prev)) {
+        localStorage.setItem('raceBest', t);
+        msg += ' 🎉 NOWY REKORD!';
+      }
+      document.getElementById('raceFeedback').innerHTML = msg;
+      document.getElementById('raceFeedback').style.color = '#00b894';
+      document.getElementById('raceStartBtn').textContent = '🔄 Zagraj jeszcze raz';
+      document.getElementById('raceStartBtn').style.display = 'inline-block';
+      document.getElementById('raceStartBtn').onclick = resetRace;
+      const best = localStorage.getItem('raceBest');
+      document.getElementById('raceBest').textContent = `🏆 Najlepszy czas: ${best}s`;
+    } else {
+      const next = months.find(x => x.num === raceCurrent);
+      document.getElementById('raceTarget').innerHTML = `Znajdź: <strong>${next.name}</strong>`;
+    }
+  } else {
+    btn.classList.add('flash-wrong');
+    setTimeout(() => btn.classList.remove('flash-wrong'), 400);
+  }
+}
+</script>
+</body>
+</html>
